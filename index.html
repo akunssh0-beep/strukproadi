@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk Pro Max V3 Monster - it.barokah.net</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --ios-bg: #f2f2f7;
+            --ios-card: #ffffff;
+            --accent: #007aff;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--ios-bg);
+            transition: all 0.3s ease;
+            scroll-behavior: smooth;
+        }
+
+        .dark {
+            --ios-bg: #000000;
+            --ios-card: #1c1c1e;
+            --accent: #0a84ff;
+            color: white;
+        }
+
+        /* Glassmorphism & iOS Styles */
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .dark .ios-blur { background: rgba(28, 28, 30, 0.8); }
+
+        .ios-card {
+            background: var(--ios-card);
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .ios-card { border: 1px solid rgba(255,255,255,0.1); }
+
+        .font-mono-receipt { font-family: 'JetBrains Mono', monospace; }
+
+        /* Receipt Sizes */
+        .paper-80mm { width: 80mm; min-height: 120mm; }
+        .paper-a4 { width: 210mm; min-height: 297mm; }
+        
+        /* Toast & Animations */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-animate { animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        #stempel-img {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 100px; mix-blend-mode: multiply; opacity: 0.8;
+            transform: rotate(-15deg); display: none;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .ios-card { box-shadow: none; border: none; }
+        }
+
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json?v=1777283706691">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body class="antialiased overflow-x-hidden">
+
+<div id="toast-container"></div>
+
+<div id="it-barokah-app" class="min-h-screen">
+    <header class="no-print ios-blur sticky top-0 z-[100] border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                    <i class="fa-solid fa-dragon text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg leading-tight">it.barokah<span class="text-blue-600">.v3</span></h1>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monster Edition</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="Core.backupData()" class="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Backup JSON">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                </button>
+                <label class="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer" title="Restore JSON">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <input type="file" id="restore-file" class="hidden" onchange="Core.restoreData(event)">
+                </label>
+                <button onclick="UI.toggleDarkMode()" class="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <i class="fa-solid fa-moon dark:text-yellow-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <aside class="no-print lg:col-span-5 space-y-6">
+            <div class="ios-card p-6 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-black uppercase tracking-tighter">Monster Engine V3</h2>
+                    <span id="edit-indicator" class="hidden text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">EDITING</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1">INVOICE NUMBER</label>
+                        <input type="text" id="in-nota" class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1">TRANS DATE</label>
+                        <input type="date" id="in-tanggal" class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 text-sm outline-none">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <input type="text" id="in-nama" placeholder="Customer Name" class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center px-1">
+                            <label class="text-[10px] font-bold text-gray-400">ITEM DETAILS (QTY x PRICE x DISC x TAX)</label>
+                        </div>
+                        <div id="item-list-input" class="space-y-3">
+                            </div>
+                        <button onclick="Core.addItemRow()" class="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-xs font-bold text-gray-400 hover:text-blue-500 hover:border-blue-500 transition">
+                            <i class="fa-solid fa-plus mr-2"></i>Tambah Item Monster
+                        </button>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1">CUSTOMER NOTES</label>
+                        <textarea id="in-catatan" rows="2" placeholder="Catatan tambahan (opsional)..." class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 text-sm outline-none resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-3">
+                    <select id="in-theme" class="bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-3 text-xs font-bold outline-none cursor-pointer">
+                        <option value="modern">Modern Professional</option>
+                        <option value="dark-gold">Exclusive Gold</option>
+                        <option value="minimal">Ultra Minimalist</option>
+                    </select>
+                    <select id="in-paper" class="bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-3 text-xs font-bold outline-none cursor-pointer">
+                        <option value="paper-80mm">Thermal 80mm</option>
+                        <option value="paper-a4">Full Page A4</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button onclick="Core.saveNota()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i>Execute & Save
+                    </button>
+                    <button onclick="Core.resetForm()" class="p-4 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-red-50 hover:text-red-600 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <section class="lg:col-span-4 flex flex-col items-center">
+            <div id="receipt-container" class="bg-white p-6 shadow-2xl relative overflow-hidden transition-all paper-80mm text-black">
+                <div id="out-watermark" class="watermark-text">LUNAS</div>
+                
+                <div class="relative z-10 font-mono-receipt text-[10px]" id="receipt-content">
+                    <div class="text-center mb-5">
+                        <h2 id="out-usaha" class="text-base font-black uppercase tracking-tighter">it.barokah.net</h2>
+                        <p class="text-[7px] opacity-60 leading-tight">SAMPANAHAN HILIR, KOTABARU, KALSEL<br>WhatsApp: 08xx-xxxx-xxxx</p>
+                        <div class="border-b border-dashed border-gray-300 my-3"></div>
+                    </div>
+
+                    <div class="space-y-0.5 mb-4 border-l-2 border-blue-600 pl-2">
+                        <div class="flex justify-between"><span>No:</span><span id="out-nota" class="font-bold"></span></div>
+                        <div class="flex justify-between"><span>Date:</span><span id="out-tgl"></span></div>
+                        <div class="flex justify-between"><span>Cust:</span><span id="out-nama" class="font-bold uppercase"></span></div>
+                    </div>
+
+                    <table class="w-full mb-4">
+                        <thead>
+                            <tr class="border-b border-gray-900">
+                                <th class="text-left py-1">ITEMS</th>
+                                <th class="text-right py-1">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="out-items"></tbody>
+                        <tfoot class="border-t border-gray-400">
+                            <tr><td class="pt-2">Subtotal</td><td id="out-subtotal" class="text-right pt-2"></td></tr>
+                            <tr><td>Pajak</td><td id="out-pajak" class="text-right"></td></tr>
+                            <tr class="font-black text-xs">
+                                <td class="py-2">TOTAL AKHIR</td>
+                                <td id="out-total" class="text-right py-2 text-blue-700"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div id="out-catatan-box" class="mb-5 p-2 bg-gray-50 rounded italic text-[8px] hidden">
+                        * <span id="out-catatan"></span>
+                    </div>
+
+                    <div class="flex justify-between items-end mt-6">
+                        <div id="qrcode"></div>
+                        <div class="text-center min-w-[100px]">
+                            <p class="text-[8px] mb-8">Authorized Signatory,</p>
+                            <img id="stempel-img" src="">
+                            <p class="font-bold border-t border-gray-900 pt-1">ADI PURNOMO</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="no-print mt-6 flex flex-wrap justify-center gap-2">
+                <button onclick="Exporter.png()" class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow shadow-blue-100 flex items-center gap-2 font-bold text-xs"><i class="fa-solid fa-image text-emerald-500"></i> PNG</button>
+                <button onclick="Exporter.pdf()" class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow shadow-blue-100 flex items-center gap-2 font-bold text-xs"><i class="fa-solid fa-file-pdf text-rose-500"></i> PDF</button>
+                <button onclick="Exporter.whatsapp()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-all"><i class="fa-brands fa-whatsapp text-lg"></i> Kirim WA</button>
+            </div>
+        </section>
+
+        <aside class="no-print lg:col-span-3 space-y-6">
+            <div class="ios-card p-6 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
+                <p class="text-[9px] font-bold opacity-60 uppercase">Monster Revenue</p>
+                <h3 id="stat-total" class="text-xl font-black mt-1 tracking-tighter">Rp 0</h3>
+                <div class="mt-4 flex justify-between bg-white/10 p-2 rounded-lg text-[10px]">
+                    <span>Total Invoices</span>
+                    <span id="stat-count" class="font-bold text-blue-300">0</span>
+                </div>
+            </div>
+
+            <div class="ios-card p-5 h-[500px] flex flex-col">
+                <h2 class="text-xs font-black uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-database text-blue-500"></i> Local Storage (DB)</h2>
+                <input type="text" id="history-search" placeholder="Search..." class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl py-2 px-4 text-xs mb-4 outline-none">
+                <div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+/** * MONSTER CORE ENGINE V3
+ * Modular ES6 Design
+ */
+
+const DB_CONFIG = { name: 'ITBarokahDB', version: 3, store: 'invoices' };
+
+const Core = {
+    db: null,
+    items: [{ id: Date.now(), desc: 'Internet Service', qty: 1, price: 100000, disc: 0, tax: 0 }],
+    editId: null,
+
+    async init() {
+        await this.initDB();
+        UI.initFields();
+        this.renderItems();
+        this.renderHistory();
+        this.updateStats();
+        
+        // Listeners
+        document.getElementById('in-theme').onchange = () => UI.applyTheme();
+        document.getElementById('in-paper').onchange = (e) => UI.setPaper(e.target.value);
+        document.querySelectorAll('input').forEach(el => el.oninput = () => this.liveSync());
+    },
+
+    initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(DB_CONFIG.store)) {
+                    db.createObjectStore(DB_CONFIG.store, { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+            request.onerror = (e) => reject(e);
+        });
+    },
+
+    addItemRow() {
+        this.items.push({ id: Date.now(), desc: '', qty: 1, price: 0, disc: 0, tax: 0 });
+        this.renderItems();
+    },
+
+    removeItem(id) {
+        if (this.items.length > 1) {
+            this.items = this.items.filter(item => item.id !== id);
+            this.renderItems();
+        }
+    },
+
+    updateItem(id, field, val) {
+        const item = this.items.find(i => i.id === id);
+        if (item) {
+            item[field] = (field === 'desc') ? this.sanitize(val) : parseFloat(val || 0);
+            this.liveSync();
+        }
+    },
+
+    sanitize(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    },
+
+    renderItems() {
+        const container = document.getElementById('item-list-input');
+        container.innerHTML = this.items.map((item, idx) => `
+            <div class="ios-card p-3 bg-gray-50/50 dark:bg-white/5 space-y-2 animate-ui">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Item Name" value="${item.desc}" oninput="Core.updateItem(${item.id}, 'desc', this.value)" class="flex-1 bg-transparent border-b border-gray-200 dark:border-gray-700 p-1 text-xs outline-none">
+                    <button onclick="Core.removeItem(${item.id})" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-circle-xmark"></i></button>
+                </div>
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-bold opacity-50">QTY</label>
+                        <input type="number" value="${item.qty}" oninput="Core.updateItem(${item.id}, 'qty', this.value)" class="w-full bg-white dark:bg-gray-800 rounded-md p-1 text-[10px] outline-none border border-gray-100 dark:border-gray-700">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-bold opacity-50">PRICE</label>
+                        <input type="number" value="${item.price}" oninput="Core.updateItem(${item.id}, 'price', this.value)" class="w-full bg-white dark:bg-gray-800 rounded-md p-1 text-[10px] outline-none border border-gray-100 dark:border-gray-700">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-bold opacity-50">DISC(%)</label>
+                        <input type="number" value="${item.disc}" oninput="Core.updateItem(${item.id}, 'disc', this.value)" class="w-full bg-white dark:bg-gray-800 rounded-md p-1 text-[10px] outline-none border border-gray-100 dark:border-gray-700">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-bold opacity-50">TAX(%)</label>
+                        <input type="number" value="${item.tax}" oninput="Core.updateItem(${item.id}, 'tax', this.value)" class="w-full bg-white dark:bg-gray-800 rounded-md p-1 text-[10px] outline-none border border-gray-100 dark:border-gray-700">
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        this.liveSync();
+    },
+
+    liveSync() {
+        const nota = document.getElementById('in-nota').value;
+        const nama = document.getElementById('in-nama').value || 'TUNAI';
+        const tgl = document.getElementById('in-tanggal').value;
+        const catatan = document.getElementById('in-catatan').value;
+
+        document.getElementById('out-nota').innerText = nota;
+        document.getElementById('out-nama').innerText = nama;
+        document.getElementById('out-tgl').innerText = UI.formatDate(tgl);
+
+        let subtotal = 0;
+        let totalPajak = 0;
+
+        const outItems = document.getElementById('out-items');
+        outItems.innerHTML = this.items.map(i => {
+            const bruto = i.qty * i.price;
+            const diskon = bruto * (i.disc / 100);
+            const netto = bruto - diskon;
+            const pajak = netto * (i.tax / 100);
+            
+            subtotal += netto;
+            totalPajak += pajak;
+
+            return `
+                <tr class="border-b border-gray-100">
+                    <td class="py-2">
+                        <div class="font-bold text-[9px]">${i.desc || 'New Item'}</div>
+                        <div class="text-[7px] opacity-60">${i.qty} x ${UI.formatRp(i.price)} ${i.disc > 0 ? `(Disc ${i.disc}%)` : ''}</div>
+                    </td>
+                    <td class="text-right text-[9px]">${UI.formatRp(netto)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const totalAkhir = subtotal + totalPajak;
+        document.getElementById('out-subtotal').innerText = UI.formatRp(subtotal);
+        document.getElementById('out-pajak').innerText = UI.formatRp(totalPajak);
+        document.getElementById('out-total').innerText = UI.formatRp(totalAkhir);
+
+        // Catatan
+        const noteBox = document.getElementById('out-catatan-box');
+        if(catatan) {
+            noteBox.classList.remove('hidden');
+            document.getElementById('out-catatan').innerText = catatan;
+        } else {
+            noteBox.classList.add('hidden');
+        }
+
+        UI.qr.makeCode(`INV:${nota}|VAL:${totalAkhir}|USER:${nama}`);
+    },
+
+    async saveNota() {
+        const id = this.editId || Date.now();
+        const invoiceData = {
+            id: id,
+            nota: document.getElementById('in-nota').value,
+            nama: document.getElementById('in-nama').value,
+            tanggal: document.getElementById('in-tanggal').value,
+            catatan: document.getElementById('in-catatan').value,
+            items: [...this.items],
+            theme: document.getElementById('in-theme').value,
+            paper: document.getElementById('in-paper').value,
+            total: this.items.reduce((acc, i) => {
+                const netto = (i.qty * i.price) - ((i.qty * i.price) * (i.disc/100));
+                return acc + (netto + (netto * (i.tax/100)));
+            }, 0)
+        };
+
+        const tx = this.db.transaction(DB_CONFIG.store, 'readwrite');
+        const store = tx.objectStore(DB_CONFIG.store);
+        
+        return new Promise((resolve) => {
+            const req = store.put(invoiceData);
+            req.onsuccess = () => {
+                UI.toast('Invoice Secured Successfully! 🔥');
+                this.resetForm();
+                this.renderHistory();
+                this.updateStats();
+                resolve();
+            };
+        });
+    },
+
+    async renderHistory() {
+        const tx = this.db.transaction(DB_CONFIG.store, 'readonly');
+        const store = tx.objectStore(DB_CONFIG.store);
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const all = request.result.reverse();
+            const query = document.getElementById('history-search').value.toLowerCase();
+            const filtered = all.filter(n => n.nama.toLowerCase().includes(query) || n.nota.toLowerCase().includes(query));
+            
+            const list = document.getElementById('history-list');
+            list.innerHTML = filtered.map(n => `
+                <div class="ios-card p-3 group hover:border-blue-500 transition cursor-pointer relative" onclick="Core.loadNota(${n.id})">
+                    <div class="flex justify-between items-center">
+                        <div class="w-3/4">
+                            <p class="text-[8px] font-black text-blue-600">#${n.nota}</p>
+                            <h4 class="text-[10px] font-bold uppercase truncate">${n.nama || 'TUNAI'}</h4>
+                            <p class="text-[8px] opacity-50">${UI.formatDate(n.tanggal)}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] font-black">${UI.formatRp(n.total)}</p>
+                        </div>
+                    </div>
+                    <button onclick="Core.deleteNota(event, ${n.id})" class="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full text-[8px] opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('');
+        };
+    },
+
+    loadNota(id) {
+        const tx = this.db.transaction(DB_CONFIG.store, 'readonly');
+        const store = tx.objectStore(DB_CONFIG.store);
+        const req = store.get(id);
+
+        req.onsuccess = () => {
+            const n = req.result;
+            this.editId = n.id;
+            document.getElementById('in-nota').value = n.nota;
+            document.getElementById('in-nama').value = n.nama;
+            document.getElementById('in-tanggal').value = n.tanggal;
+            document.getElementById('in-catatan').value = n.catatan || '';
+            document.getElementById('in-theme').value = n.theme || 'modern';
+            document.getElementById('in-paper').value = n.paper || 'paper-80mm';
+            this.items = n.items;
+            
+            document.getElementById('edit-indicator').classList.remove('hidden');
+            this.renderItems();
+            UI.applyTheme();
+            UI.setPaper(n.paper);
+            UI.toast('Invoice Loaded for Editing');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    },
+
+    async deleteNota(e, id) {
+        e.stopPropagation();
+        if(confirm('Are you sure you want to annihilate this data?')) {
+            const tx = this.db.transaction(DB_CONFIG.store, 'readwrite');
+            tx.objectStore(DB_CONFIG.store).delete(id);
+            tx.oncomplete = () => {
+                this.renderHistory();
+                this.updateStats();
+                UI.toast('Data Deleted', 'error');
+            };
+        }
+    },
+
+    async updateStats() {
+        const tx = this.db.transaction(DB_CONFIG.store, 'readonly');
+        const req = tx.objectStore(DB_CONFIG.store).getAll();
+        req.onsuccess = () => {
+            const all = req.result;
+            const total = all.reduce((acc, n) => acc + n.total, 0);
+            document.getElementById('stat-total').innerText = UI.formatRp(total);
+            document.getElementById('stat-count').innerText = all.length;
+        };
+    },
+
+    async backupData() {
+        const tx = this.db.transaction(DB_CONFIG.store, 'readonly');
+        const req = tx.objectStore(DB_CONFIG.store).getAll();
+        req.onsuccess = () => {
+            const data = JSON.stringify(req.result);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Monster_V3_Backup_${Date.now()}.json`;
+            a.click();
+            UI.toast('Backup File Generated');
+        };
+    },
+
+    async restoreData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                const tx = this.db.transaction(DB_CONFIG.store, 'readwrite');
+                const store = tx.objectStore(DB_CONFIG.store);
+                data.forEach(item => store.put(item));
+                tx.oncomplete = () => {
+                    this.renderHistory();
+                    this.updateStats();
+                    UI.toast('Data Restored Successfully!');
+                };
+            } catch (err) {
+                UI.toast('Invalid JSON File', 'error');
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    resetForm() {
+        this.editId = null;
+        this.items = [{ id: Date.now(), desc: '', qty: 1, price: 0, disc: 0, tax: 0 }];
+        document.getElementById('in-nama').value = '';
+        document.getElementById('in-catatan').value = '';
+        document.getElementById('edit-indicator').classList.add('hidden');
+        UI.initFields();
+        this.renderItems();
+    }
+};
+
+const UI = {
+    qr: null,
+    
+    initFields() {
+        const now = new Date();
+        document.getElementById('in-tanggal').value = now.toISOString().split('T')[0];
+        
+        // Auto Invoice Monster Generation
+        const year = now.getFullYear();
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        document.getElementById('in-nota').value = `INV/${year}/${random}`;
+        
+        if(!this.qr) this.qr = new QRCode(document.getElementById("qrcode"), { width: 50, height: 50 });
+        if(localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+    },
+
+    formatRp(v) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
+    },
+
+    formatDate(dateStr) {
+        return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    },
+
+    toast(msg, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast-animate mb-3 px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3 ${type === 'success' ? 'bg-blue-600' : 'bg-red-500'}`;
+        toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-double' : 'fa-triangle-exclamation'}"></i> ${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    },
+
+    toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+        localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    },
+
+    applyTheme() {
+        const theme = document.getElementById('in-theme').value;
+        const cont = document.getElementById('receipt-container');
+        cont.style.background = (theme === 'dark-gold') ? '#1a1c1e' : '#ffffff';
+        cont.style.color = (theme === 'dark-gold') ? '#d4af37' : '#000000';
+        cont.classList.toggle('border-gold', theme === 'dark-gold');
+    },
+
+    setPaper(v) {
+        const cont = document.getElementById('receipt-container');
+        cont.className = `bg-white p-6 shadow-2xl relative overflow-hidden transition-all text-black ${v}`;
+    },
+
+    handleStempel(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('stempel-img');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+};
+
+const Exporter = {
+    async png() {
+        UI.toast('Generating Monster Image...');
+        const cont = document.getElementById('receipt-container');
+        const canvas = await html2canvas(cont, { scale: 3, useCORS: true });
+        const link = document.createElement('a');
+        link.download = `Invoice_${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    },
+
+    async pdf() {
+        UI.toast('Manufacturing PDF Document...');
+        const cont = document.getElementById('receipt-container');
+        const canvas = await html2canvas(cont, { scale: 3 });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        pdf.addImage(imgData, 'PNG', 10, 10, 80, 0);
+        pdf.save(`Monster_Invoice_${Date.now()}.pdf`);
+    },
+
+    whatsapp() {
+        const nama = document.getElementById('in-nama').value || 'Pelanggan';
+        const total = document.getElementById('out-total').innerText;
+        const nota = document.getElementById('out-nota').innerText;
+        const text = `Halo Kak *${nama}*,\nBerikut adalah rincian tagihan Anda:\n\nNo: *${nota}*\nTotal: *${total}*\nStatus: *LUNAS*\n\nTerima kasih telah menggunakan layanan kami. _it.barokah.net_`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+    }
+};
+
+// Initialize Core
+Core.init();
+
+// Global for Event Handlers
+window.Core = Core;
+window.UI = UI;
+window.Exporter = Exporter;
+</script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js?v=1777283706691').then(reg => {
+            console.log('PWA: ServiceWorker Registered');
+            
+          });
+        });
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      }
+    </script>
+</body>
+</html>
