@@ -1,11 +1,11 @@
 {
   "name": "CETAK STRUK",
   "short_name": "CETAK STRUK",
-  "start_url": "index.html?v=1777283706691",
+  "start_url": "index.html?v=1777284878374",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
-  "version": "1777283706691",
+  "version": "1777284878374",
   "icons": [
     {
       "src": "icon-192.png",

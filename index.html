@@ -82,6 +82,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json?v=1777283706691">
     <link rel="apple-touch-icon" href="icon-192.png">
+
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json?v=1777284878374">
+    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body class="antialiased overflow-x-hidden">
 
@@ -668,6 +675,31 @@ window.Exporter = Exporter;
           navigator.serviceWorker.register('./sw.js?v=1777283706691').then(reg => {
             console.log('PWA: ServiceWorker Registered');
             
+          });
+        });
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      }
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js?v=1777284878374').then(reg => {
+            console.log('PWA: ServiceWorker Registered');
+            
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  window.location.reload();
+                }
+              };
+            };
           });
         });
         let refreshing = false;
